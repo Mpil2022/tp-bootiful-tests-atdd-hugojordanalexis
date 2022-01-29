@@ -2,7 +2,7 @@
   "tests": [
     {
       "name": "mvn clean verify",
-      "setup": "",
+      "setup": "npm install -g phantomjs",
       "run": "mvn clean verify",
       "input": "",
       "output": "",
