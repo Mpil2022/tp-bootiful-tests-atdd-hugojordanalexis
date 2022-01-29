@@ -12,17 +12,17 @@ public class DefinitionSteps {
     @Steps
     EndUserSteps endUser;
 
-    @Given("the user is on the Wikionary home page")
+    @Given("the user is on the Adder app home page")
     public void givenTheUserIsOnTheWikionaryHomePage() {
         endUser.is_the_home_page();
     }
 
-    @When("the user looks up the definition of the word '$word'")
-    public void whenTheUserLooksUpTheDefinitionOf(String word) {
-        endUser.looks_for(word);
+    @When("the user add the number '$number'")
+    public void whenTheUserLooksUpTheDefinitionOf(String number) {
+        endUser.looks_for(number);
     }
 
-    @Then("they should see the definition '$definition'")
+    @Then("they should see the result '$result'")
     public void thenTheyShouldSeeADefinitionContainingTheWords(String definition) {
         endUser.should_see_definition(definition);
     }
