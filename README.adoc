@@ -1,0 +1,198 @@
+:icons: font
+:source-highlighter: coderay
+:pygments-style: manni
+:pygments-linenums-mode: inline
+:title-page:
+:version: 2021-2022
+
+= bootiful tests avec Springboot, Serenity, Github Actions et SonarQube
+Jauffrey Flach <jauffrey.flach@gmail.com>
+{version}
+
+== A rendre
+NOTE: Ca y est, c'est le dernier volet de notre saga sur les tests. Votre projet de test doit passer l'autograding sur Github. Commitez sur le repo créé à cet effet. Par transparence, le test s'effectue sur un *mvn clean validate* que vous pouvez éxécuter localement. L'autograding vérifiera également l'éxécution des tests Serenity, et la présence des rapports. Facile non ?
+
+== Pré-requis
+** Tous les pré-requis des TPs précédents
+** Votre (vos) image(s) Docker
+
+== Partie 3: Serenity BDD et Testcontainers
+
+L'objectif est de créer une application de test, qui utilisera les conteneurs créés précédemment, les lancera et effectuera des tests d'intégration dessus. Nous utiliserons Serenity (demo de la semaine dernière) pour créer une simple interraction avec votre application Angular. 
+
+Nous allons finaliser notre chaine de test de telle façon que: 
+
+* Les conteneurs que nous avons créés soient instanciés avec maven
+* Une fois disponibles, l'éxécution de Serenity va enregistrer les données du test utilisateur
+
+La démarche à suivre pour développer votre application de test est la suivante: 
+
+* Créez l'application Serenity (instructions ci-dessous), et testez simplement sur votre localhost. 
+** Pour plus de simplicité, faites fonctionner d'abord avec JUnit, puis passet à jBehave
+* Une fois cette étape validée et intégrée à Maven, utilisez TestContainers https://www.testcontainers.org/ pour instancier votre application depuis vos images docker, et configurez le plugin maven pour pouvoir les tester avec votre application de test 
+
+=== Ajout des dépendances Serenity
+Ajoutez les dépendances Serenity BDD: 
+
+[source,xml]
+----
+<dependency>
+    <groupId>net.serenity-bdd</groupId>
+    <artifactId>serenity-core</artifactId>
+    <version>3.1.16</version>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>net.serenity-bdd</groupId>
+    <artifactId>serenity-spring</artifactId>
+    <version>3.1.16</version>
+    <scope>test</scope>
+</dependency>
+----
+
+Configuration du plugin maven: 
+
+[source,xml]
+----
+<plugin>
+    <groupId>net.serenity-bdd.maven.plugins</groupId>
+    <artifactId>serenity-maven-plugin</artifactId>
+    <version>3.1.16</version>
+    <executions>
+        <execution>
+            <id>serenity-reports</id>
+            <phase>post-integration-test</phase>
+            <goals>
+                <goal>aggregate</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+----
+
+=== Code d'exemple
+Serenity BDD décompose l'éxécution des scenarii de test en utilisant des _steps_. Chaque step expose des méthodes qui vont être appelées par le test en lui même. Par exemple: 
+
+Création des steps:
+[source,java]
+----
+@ContextConfiguration(classes = AdderService.class)
+public class AdderServiceSteps {
+ 
+    @Autowired
+    private AdderService adderService;
+ 
+    private int givenNumber;
+    private int base;
+    private int sum;
+ 
+    public void givenBaseAndAdder(int base, int adder) {
+        this.base = base;
+        adderService.baseNum(base);
+        this.givenNumber = adder;
+    }
+ 
+    public void whenAdd() {
+        sum = adderService.add(givenNumber);
+    }
+ 
+    public void summedUp() {
+        assertEquals(base + givenNumber, sum);
+    }
+ 
+    public void sumWrong() {
+        assertNotEquals(base + givenNumber, sum);
+    }
+ 
+    public void whenAccumulate() {
+        sum = adderService.accumulate(givenNumber);
+    }
+ 
+}
+----
+
+Le code qui éxécute ces steps est le suivant: 
+
+[source,java]
+----
+@RunWith(SpringIntegrationSerenityRunner.class)
+@ContextConfiguration(locations = "classpath:adder-beans.xml")
+public class AdderSpringSerenityRunnerIntegrationTest {
+ 
+    @Steps private AdderSteps adderSteps;
+ 
+    @Value("#{props['adder']}") private int adder;
+ 
+    @Test
+    public void givenNumber_whenAdd_thenSummedUp() {
+        adderSteps.givenNumber();
+        adderSteps.whenAdd(adder);
+        adderSteps.thenSummedUp();
+    }
+}
+----
+
+TIP: Les steps sont injectés par Spring dans le contexte de test. Nous pouvons encore simplifier le code en utilisane jBehave, un framework de BDD.
+
+=== jBehave 
+Installez la dépendance suivante: 
+[source,xml]
+----
+<dependency>
+    <groupId>io.rest-assured</groupId>
+    <artifactId>spring-mock-mvc</artifactId>
+    <version>4.5.0</version>
+    <scope>test</scope>
+</dependency>
+----
+
+Ajoutez maintenant un fichier *adder_test.story* avec le contenu suivant:
+----
+Meta:
+
+Narrative:
+As user
+I want to add a number
+So that I can have the sum
+
+Scenario: A user can submit a number to adder and get current sum
+Given a number
+When I submit another number 5 to adder
+Then I get a sum of the numbers
+----
+
+TIP: Il est important de noter que pour fonctionner correctement, les fichier de story doivent se trouver dans /src/test/resources/<whatever>/stories
+
+Pour rendre ce texte éxécutable, nous allons écrire son interpréteur jBehave avec Serenity: 
+[source,java]
+----
+public class AdderStory {
+ 
+    @Steps AdderSteps adderSteps;
+ 
+    @Given("a number")
+    public void givenANumber() throws Exception{
+        adderSteps.givenCurrentNumber();
+    }
+ 
+    @When("I submit another number $num to adder")
+    public void whenISubmitToAdderWithNumber(int num){
+        adderSteps.whenAddNumber(num);
+    }
+ 
+    @Then("I get a sum of the numbers")
+    public void thenIGetTheSum(){
+        adderSteps.thenSummedUp();
+    }
+}
+----
+
+NOTE: Implémentez maintenant le test en utilisant jBehave. 
+
+<<<
+== Webographie
+Ce tutorial a été repris et adapté depuis les liens suivants:
+
+* https://www.baeldung.com/serenity-spring-jbehave 
+* https://www.baeldung.com/serenity-bdd 
+* https://github.com/eugenp/tutorials/tree/master/libraries-testing 
