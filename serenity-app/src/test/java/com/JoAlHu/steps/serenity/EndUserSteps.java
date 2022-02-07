@@ -24,7 +24,7 @@ public class EndUserSteps {
 
     @Step
     public void should_see_definition(String definition) {
-        //Verifier que on a bien la bonne current value
+        dictionaryPage.getDefinition();
         //assertThat(True);
     }
 
@@ -35,6 +35,7 @@ public class EndUserSteps {
 
     @Step
     public void looks_for(String number) {
+        dictionaryPage.getDefinition();
         enters(number);
         starts_search();
     }

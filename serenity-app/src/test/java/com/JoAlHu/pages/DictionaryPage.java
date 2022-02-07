@@ -22,21 +22,16 @@ public class DictionaryPage extends PageObject {
     private WebElementFacade lookupButton;
 
     public void enter_keywords(String number) {
-        System.out.println("TEST");
         searchTerms.type(number);
-        System.out.println("TEST"); 
     }
 
     public void lookup_terms() {
-        /*
         lookupButton.click();
-        */
     }
 
-    public List<String> getDefinitions() {
-        WebElementFacade definitionList = find(By.tagName("ol"));
-        return definitionList.findElements(By.tagName("li")).stream()
-                .map( element -> element.getText() )
-                .collect(Collectors.toList());
+    public String getDefinition() {
+        WebElementFacade definition = find(By.name("currentValue"));
+        System.out.println(definition.getText());
+        return definition.getText();
     }
 }
