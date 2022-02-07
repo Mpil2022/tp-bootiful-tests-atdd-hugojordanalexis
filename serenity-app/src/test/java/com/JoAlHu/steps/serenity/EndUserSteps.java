@@ -8,10 +8,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.utility.DockerImageName;
+
 public class EndUserSteps {
 
     DictionaryPage dictionaryPage;
-
+  
     @Step
     public void enters(String number) {
         dictionaryPage.enter_keywords(number);
