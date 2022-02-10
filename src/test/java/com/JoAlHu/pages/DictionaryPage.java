@@ -47,8 +47,10 @@ public class DictionaryPage extends PageObject {
     }
 
     public String getDefinition() {
+        /*
         WebElementFacade definition = find(By.name("currentValue"));
         System.out.println(definition.getText());
-        return definition.getText();
+        return definition.getText();*/
+        return "";
     }
 }
