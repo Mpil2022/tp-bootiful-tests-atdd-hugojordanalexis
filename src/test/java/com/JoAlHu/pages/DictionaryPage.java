@@ -25,10 +25,11 @@ public class DictionaryPage extends PageObject {
   public static final DockerImageName BACK_IMAGE = DockerImageName.parse("scherringj/test-api:latest");
 
     public DictionaryPage()  {
+        /*
          GenericContainer<?> front = new GenericContainer<>(FRONT_IMAGE).withExposedPorts(4200);
          GenericContainer<?> back = new GenericContainer<>(BACK_IMAGE).withExposedPorts(8080);
          String address = front.getHost();
-         System.out.println("----------------------" + address + "---------------------------");
+         System.out.println("----------------------" + address + "---------------------------"); */
     }
 
     @FindBy(name="addValue")

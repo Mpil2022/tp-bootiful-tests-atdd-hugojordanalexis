@@ -11,6 +11,8 @@ import static org.hamcrest.Matchers.hasItem;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import static org.junit.Assert.*;
+
 public class EndUserSteps {
 
     DictionaryPage dictionaryPage;
@@ -28,7 +30,7 @@ public class EndUserSteps {
     @Step
     public void should_see_definition(String definition) {
         dictionaryPage.getDefinition();
-        //assertThat(True);
+        //assertThat(dictionaryPage.getDefinition(), hasItem(containsString(definition)));
     }
 
     @Step
